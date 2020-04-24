@@ -1,0 +1,34 @@
+---
+- name: generate ssl certificate
+  hosts: 127.0.0.1
+  gather_facts: false
+
+  tasks:
+  - name: Install openssl package
+    apt: name=openssl state=latest
+
+# This is optional steps to keep ssl certificate, create a directory
+  - name: Create ssl directory
+    file: path=/etc/ssl/linuxtopic state=directory mode=0775
+
+# Now we will generate a private key by using a "openssl_privatekey" module 
+  - name: Generate Private key
+    openssl_privatekey: path=/etc/ssl/linuxtopic/server-master.key
+
+# After generation of key we will generate csr with the help of "openssl_csr" module 
+  - name: Generate CSR
+    openssl_csr: 
+     path: /etc/ssl/linuxtopic/linuxtopic-client.csr
+     privatekey_path: /etc/ssl/linuxtopic/server-master.key 
+     common_name: linuxtopic.com 
+     country_name: IN
+     email_address: lokesh@linuxtopic.com
+     organization_name: linuxtopic
+
+# at the end of the tasks we will generate certificate using  "openssl_certificate" module
+  - name: Generate a self signed certificate
+    openssl_certificate:
+     csr_path: /etc/ssl/linuxtopic/linuxtopic-client.csr
+     path: /etc/ssl/linuxtopic/linuxtopic-self-signed.crt
+     privatekey_path: /etc/ssl/linuxtopic/server-master.key
+     provider: selfsigned
